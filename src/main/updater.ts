@@ -1,5 +1,5 @@
 import { autoUpdater, UpdateInfo, ProgressInfo } from 'electron-updater';
-import { BrowserWindow, ipcMain, dialog } from 'electron';
+import { BrowserWindow, ipcMain } from 'electron';
 
 let mainWindow: BrowserWindow | null = null;
 let updateCheckInterval: NodeJS.Timeout | null = null;
@@ -44,22 +44,6 @@ export function initAutoUpdater(win: BrowserWindow): void {
     state.available = true;
     state.version = info.version;
     sendUpdateState();
-
-    dialog
-      .showMessageBox(mainWindow!, {
-        type: 'info',
-        title: 'Mise à jour disponible',
-        message: `Une nouvelle version de Konex est disponible (v${info.version})`,
-        detail: 'Voulez-vous télécharger et installer la mise à jour ?',
-        buttons: ['Télécharger', 'Plus tard'],
-        defaultId: 0,
-        cancelId: 1,
-      })
-      .then((result) => {
-        if (result.response === 0) {
-          downloadUpdate();
-        }
-      });
   });
 
   autoUpdater.on('update-not-available', () => {
@@ -77,24 +61,9 @@ export function initAutoUpdater(win: BrowserWindow): void {
   autoUpdater.on('update-downloaded', (info: UpdateInfo) => {
     state.downloaded = true;
     state.progress = 100;
+    state.version = info.version;
     sendUpdateState();
     mainWindow?.setProgressBar(-1);
-
-    dialog
-      .showMessageBox(mainWindow!, {
-        type: 'info',
-        title: 'Mise à jour prête',
-        message: 'La mise à jour a été téléchargée',
-        detail: 'Konex va redémarrer pour appliquer la mise à jour.',
-        buttons: ['Redémarrer maintenant', 'Plus tard'],
-        defaultId: 0,
-        cancelId: 1,
-      })
-      .then((result) => {
-        if (result.response === 0) {
-          autoUpdater.quitAndInstall(false, true);
-        }
-      });
   });
 
   autoUpdater.on('error', (error: Error) => {
